@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/TKMAX777/panda"
 	"github.com/slack-go/slack"
 )
 
@@ -34,8 +36,36 @@ func main() {
 	token := config.BotToken
 	c := slack.New(token)
 
+	Panda := panda.NewClient()
+
+	pandaErr := Panda.Login(os.Getenv("ECSID"), os.Getenv("ECSID_PW"))
+	if pandaErr != nil {
+		panic(pandaErr)
+	}
+	//ass, _ := Panda.GetAssignment()
+	cont := Panda.GetFavoriteSites()
+	fmt.Printf("%+v\n", cont)
+
+	str := ":rest-panda: お気に入りサイト情報 :rest-panda:\n"
+	for i := 0; i < len(cont.FavoriteSitesIDs); i++ {
+		dat := Panda.GetContent(cont.FavoriteSitesIDs[i])
+		fmt.Printf("%+v\n", dat)
+		for j := 0; j < len(dat); j++ {
+			str += "> " + dat[j].Author + " " + dat[j].Title + " " + dat[j].EntityTitle + dat[j].FromDate + " " + dat[j].EndDate + " " + dat[j].Quota + "\n"
+		}
+	}
+
+	// for i := 0; i < len(ass); i++ {
+	// 	fmt.Printf("%+v\n", ass[i])
+	// 	mes := ass[i].Author + "\n" + ass[i].Title
+	// 	_, _, err := c.PostMessage(config.PostChannel, slack.MsgOptionText(mes, false))
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+
 	// MsgOptionText() の第二引数に true を設定すると特殊文字をエスケープする
-	_, _, err := c.PostMessage(config.PostChannel, slack.MsgOptionText("Hello World\nわいわい", false))
+	_, _, err := c.PostMessage(config.PostChannel, slack.MsgOptionText(str, false))
 	if err != nil {
 		panic(err)
 	}
